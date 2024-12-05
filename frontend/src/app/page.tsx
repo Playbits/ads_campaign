@@ -1,35 +1,28 @@
-import Image from "next/image";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CampaignFrom } from "./form";
+import { CampaignTable } from "./table";
 
 export default function Home() {
   return (
-    <div className="grid grid-cols-2 gap-10 p-10">
+    <div className="flex gap-10 p-10">
       {/* Add Ads Campaign component */}
-      <Card>
+      <Card className="w-1/4 md:w-4/4">
         <CardHeader>
           <CardTitle>Create New Ads Campaign</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Card Content</p>
+          <p>Ads Form</p>
+          <CampaignFrom />
         </CardContent>
       </Card>
-      <Card>
+      <Card className="w-3/4 md:w-4/4">
         <CardHeader>
           <CardTitle>List of created ads campaign</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Card Content</p>
+          <p>Ads Campaign List</p>
+          {/* <CampaignTable /> */}
         </CardContent>
-        <CardFooter>
-          <p>Card Footer</p>
-        </CardFooter>
       </Card>
     </div>
   );
