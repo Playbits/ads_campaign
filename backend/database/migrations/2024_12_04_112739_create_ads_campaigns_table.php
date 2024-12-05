@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('ads_campaigns', function (Blueprint $table) {
             $table->id();
+            $table->string('name', 100);
+            $table->float('total_budget');
+            $table->float('daily_budget');
+            $table->json('images');
+            $table->timestamp("start_date");
+            $table->timestamp("end_date");
             $table->timestamps();
         });
     }
@@ -25,14 +31,3 @@ return new class extends Migration
         Schema::dropIfExists('ads_campaigns');
     }
 };
-
-
-// Name - string format.
-
-// Dates (`from` and `to`) - date format.
-
-// Total budget (in USD) - float format (2 decimal places).
-
-// Daily budget (in USD) - float format (2 decimal places).
-
-// Creative upload - multiple banner images of any size can be added. - image file upload.
