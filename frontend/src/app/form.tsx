@@ -30,6 +30,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { formatCurrency } from "@/lib/helper";
 const ACCEPTED_IMAGE_TYPES = [
   "image/jpeg",
   "image/jpg",
@@ -37,26 +38,53 @@ const ACCEPTED_IMAGE_TYPES = [
   "image/webp",
 ];
 
+// Define a schema for individual files
+const fileSchema = z
+  .instanceof(File, {
+    message: "Please select an image file.",
+  })
+  .refine((file) => ACCEPTED_IMAGE_TYPES.includes(file.type), {
+    message: "Please upload a valid image file (JPEG, PNG, or WebP).",
+  });
+
+// Zod Schema for Multiple Images
+const imagesSchema = z
+  .array(fileSchema)
+  .min(1, "Please upload at least one image.");
+
+// Define a Zod schema for validating the date range
+const dateRangeSchema = z
+  .object({
+    from: z.date({
+      required_error: "Start date is required.",
+      invalid_type_error: "Start date must be a valid date.",
+    }),
+    to: z.date({
+      required_error: "End date is required.",
+      invalid_type_error: "End date must be a valid date.",
+    }),
+  })
+  .refine((data) => data.from <= data.to, {
+    message: "Start date must be before or equal to the end date.",
+    path: ["end"], // Point the error to the `end` field
+  });
+
 const formSchema = z.object({
   name: z.string().min(2, {
     message: "Ads campaign Name must be at least 2 characters.",
   }),
-  dates: z.string().min(2, {
-    message: "Ads campaign Name must be at least 2 characters.",
-  }),
-  totalBudget: z.number().min(2, {
-    message: "Ads campaign Name must be at least 2 characters.",
-  }),
-  dailyBudget: z.string().min(2, {
-    message: "Ads campaign Name must be at least 2 characters.",
-  }),
-  images: z
-    .instanceof(File, {
-      message: "Please select an image file.",
-    })
-    .refine((file) => ACCEPTED_IMAGE_TYPES.includes(file.type), {
-      message: "Please upload a valid image file (JPEG, PNG, or WebP).",
-    }),
+  dates: dateRangeSchema,
+  totalBudget: z
+    .string()
+    .min(1, "Total budget is required")
+    .trim()
+    .regex(/^[0-9]*$/, "Enter only  Number "),
+  dailyBudget: z
+    .string()
+    .min(1, "Daily budget is required")
+    .trim()
+    .regex(/^[0-9]*$/, "Enter only  Number "),
+  images: imagesSchema,
 });
 
 const ShowImages = ({
@@ -115,19 +143,28 @@ const ShowImages = ({
 };
 
 export function CampaignFrom() {
+  const [date, setDate] = React.useState<DateRange | undefined>();
+  const [uploadedFiles, setUploadedFiles] = React.useState<File[]>();
+
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      dates: date,
+      images: uploadedFiles,
     },
   });
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
   }
-  const [date, setDate] = React.useState<DateRange | undefined>();
-  const [uploadedFiles, setUploadedFiles] = React.useState<File[]>();
+  const { setValue } = form;
+  React.useEffect(() => {
+    if (uploadedFiles) {
+      setValue("images", uploadedFiles, { shouldValidate: true });
+    }
+  }, [uploadedFiles]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const FileList = e.target.files;
@@ -148,6 +185,9 @@ export function CampaignFrom() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className="absolute top-0 right-0 m-5">
+          <Button type="submit">Submit</Button>
+        </div>
         <FormField
           control={form.control}
           name="name"
@@ -163,7 +203,47 @@ export function CampaignFrom() {
         />
         <FormField
           control={form.control}
-          name="name"
+          name="dailyBudget"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel> Daily Budget</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Enter Ads campaign Daily Budget"
+                  {...field}
+                  type="text"
+                />
+              </FormControl>
+              <FormDescription>
+                {formatCurrency(Number(form.getValues("dailyBudget")))}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="totalBudget"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel> Total Budget</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Enter Ads campaign Total Budget"
+                  {...field}
+                  type="text"
+                />
+              </FormControl>
+              <FormDescription>
+                {formatCurrency(Number(form.getValues("totalBudget")))}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="dates"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Ads Start - End dates</FormLabel>
@@ -200,7 +280,7 @@ export function CampaignFrom() {
                       mode="range"
                       defaultMonth={date?.from}
                       selected={date}
-                      onSelect={setDate}
+                      onSelect={(e) => (field.onChange(e), setDate(e))}
                       numberOfMonths={2}
                       disabled={(date) => date < new Date()}
                       className="w-full"
@@ -215,19 +295,18 @@ export function CampaignFrom() {
         <FormField
           control={form.control}
           name="images"
-          render={({}) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Select Campaign images</FormLabel>
               <FormControl>
                 <>
-                  <input
+                  <Input
                     placeholder="Upload an image"
                     onChange={handleChange}
                     type="file"
-                    accept=".jpeg,.jpg,.png,.webp"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
                     multiple
                   />
-                  {uploadedFiles && JSON.stringify(uploadedFiles)}
                   <ShowImages {...{ uploadedFiles, setUploadedFiles }} />
                 </>
               </FormControl>

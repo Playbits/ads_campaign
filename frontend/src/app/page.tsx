@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <div className="flex gap-10 p-10">
       {/* Add Ads Campaign component */}
-      <Card className="w-1/4 md:w-4/4">
+      <Card className="w-1/4 md:w-4/4 relative">
         <CardHeader>
           <CardTitle>Create New Ads Campaign</CardTitle>
         </CardHeader>
